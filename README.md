@@ -1,17 +1,297 @@
-# restaurant_app
+# CibusSanus
 
-A new Flutter project.
+Программный модуль учета продаж ресторана европейской кухни.
 
-## Getting Started
+## Описание
 
-This project is a starting point for a Flutter application.
+Данный проект представляет собой программный модуль для автоматизации учета продаж ресторана европейской кухни.
 
-A few resources to get you started if this is your first Flutter project:
+Возможности программы:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- управление категориями блюд;
+- управление блюдами;
+- создание, редактирование и удаление заказов;
+- автоматический расчет стоимости заказа;
+- поиск блюд;
+- формирование отчетов;
+- работа с базой данных PostgreSQL.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+# Используемые технологии
+
+- Flutter
+- Dart
+- PostgreSQL
+- Material Design 3
+
+---
+
+# Требования
+
+Перед запуском необходимо установить:
+
+- Flutter SDK
+- PostgreSQL 16 или выше
+- Git (необязательно)
+
+---
+
+# Структура проекта
+
+```
+CibusSanus
+│
+├── android
+├── windows
+├── linux
+├── web
+├── lib
+├── assets
+│
+├── database
+│      restaurant_db_dump.sql
+│
+├── pubspec.yaml
+└── README.md
+```
+
+---
+
+# Установка проекта
+
+## 1. Скачать проект
+
+Можно скачать ZIP архива с GitHub
+
+или выполнить команду
+
+```bash
+git clone https://github.com/ВАШ_ЛОГИН/НАЗВАНИЕ_РЕПОЗИТОРИЯ.git
+```
+
+После скачивания распакуйте архив.
+
+---
+
+## 2. Установить PostgreSQL
+
+Если PostgreSQL отсутствует, скачайте и установите его.
+
+Во время установки запомните пароль пользователя **postgres**.
+
+---
+
+## 3. Создать базу данных
+
+Откройте pgAdmin.
+
+Подключитесь к своему серверу PostgreSQL.
+
+В левой панели откройте
+
+```
+Servers
+    PostgreSQL
+        Databases
+```
+
+Нажмите правой кнопкой мыши по **Databases**
+
+Выберите
+
+```
+Create → Database...
+```
+
+Введите
+
+```
+Database:
+
+restaurant_db
+```
+
+Нажмите **Save**.
+
+---
+
+## 4. Импортировать базу данных
+
+В левой панели выберите созданную базу
+
+```
+restaurant_db
+```
+
+Нажмите правой кнопкой мыши
+
+Выберите
+
+```
+Query Tool
+```
+
+Откройте файл
+
+```
+database/restaurant_db_dump.sql
+```
+
+Нажмите кнопку
+
+```
+▶ Execute
+```
+
+Дождитесь окончания выполнения.
+
+После успешного импорта в базе должны появиться таблицы:
+
+- categories
+- dishes
+- orders
+- order_items
+
+---
+
+# Настройка подключения
+
+Откройте файл
+
+```
+lib/database/db_config.dart
+```
+
+Укажите параметры вашего PostgreSQL.
+
+Например
+
+```dart
+host = "127.0.0.1";
+
+port = 5432;
+
+database = "restaurant_db";
+
+username = "postgres";
+
+password = "ВАШ_ПАРОЛЬ";
+```
+
+Если пароль отличается от указанного в проекте, измените только поле **password**.
+
+---
+
+# Запуск проекта
+
+Откройте терминал в папке проекта.
+
+Выполните
+
+```bash
+flutter pub get
+```
+
+После успешной загрузки зависимостей выполните
+
+```bash
+flutter run
+```
+
+или запустите приложение через Visual Studio Code.
+
+---
+
+# Возможные ошибки
+
+## Ошибка
+
+```
+database "restaurant_db" does not exist
+```
+
+Причина
+
+База данных не создана.
+
+Решение
+
+Создать базу данных с именем
+
+```
+restaurant_db
+```
+
+и импортировать файл
+
+```
+restaurant_db_dump.sql
+```
+
+---
+
+## Ошибка
+
+```
+password authentication failed
+```
+
+Причина
+
+Неверный пароль PostgreSQL.
+
+Решение
+
+Проверьте пароль в файле
+
+```
+lib/database/db_config.dart
+пароль: 080918
+```
+
+---
+
+## Ошибка
+
+```
+connection refused
+```
+
+Причина
+
+Служба PostgreSQL не запущена.
+
+Решение
+
+Запустить PostgreSQL и повторить попытку.
+
+---
+
+# База данных
+
+Файл базы данных расположен по пути
+
+```
+database/restaurant_db_dump.sql
+```
+
+Данный файл содержит:
+
+- структуру базы данных;
+- таблицы;
+- ограничения;
+- связи;
+- тестовые данные.
+
+---
+
+# Автор
+
+Черепенькин Тимур Антонович
+
+Программный модуль
+
+«Учет продаж ресторана европейской кухни»
+
+2026
