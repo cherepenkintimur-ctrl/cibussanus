@@ -191,10 +191,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _exportToExcel() async {
     try {
-      await excelService.exportCategories(categories);
+      final path = await excelService.exportCategories(categories);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Файл сохранён')),
+        SnackBar(content: Text('Сохранено: $path')),
       );
     } catch (e) {
       if (!mounted) return;

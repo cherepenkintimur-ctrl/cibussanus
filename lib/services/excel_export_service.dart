@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:excel/excel.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../models/category.dart';
 import '../models/dish.dart';
@@ -10,19 +11,13 @@ import '../models/order.dart';
 class ExcelExportService {
   const ExcelExportService();
 
-  Future<String?> _pickSavePath(String defaultName) async {
-    final result = await FilePicker.platform.saveFile(
-      dialogTitle: 'Сохранить Excel файл',
-      fileName: defaultName,
-      type: FileType.custom,
-      allowedExtensions: ['xlsx'],
-    );
-    return result;
+  Future<String> _savePath(String defaultName) async {
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, defaultName);
   }
 
-  Future<void> exportCategories(List<Category> categories) async {
-    final path = await _pickSavePath('categories.xlsx');
-    if (path == null) return;
+  Future<String> exportCategories(List<Category> categories) async {
+    final path = await _savePath('categories.xlsx');
 
     final excel = Excel.createExcel();
     excel.rename('Sheet1', 'Категории');
@@ -49,11 +44,11 @@ class ExcelExportService {
     if (bytes != null) {
       await File(path).writeAsBytes(bytes);
     }
+    return path;
   }
 
-  Future<void> exportDishes(List<Dish> dishes, String Function(int?) getCategoryName) async {
-    final path = await _pickSavePath('dishes.xlsx');
-    if (path == null) return;
+  Future<String> exportDishes(List<Dish> dishes, String Function(int?) getCategoryName) async {
+    final path = await _savePath('dishes.xlsx');
 
     final excel = Excel.createExcel();
     excel.rename('Sheet1', 'Блюда');
@@ -84,14 +79,14 @@ class ExcelExportService {
     if (bytes != null) {
       await File(path).writeAsBytes(bytes);
     }
+    return path;
   }
 
-  Future<void> exportOrders(
+  Future<String> exportOrders(
     List<OrderModel> orders,
     List<Map<String, dynamic>> Function(int orderId) getDetails,
   ) async {
-    final path = await _pickSavePath('orders.xlsx');
-    if (path == null) return;
+    final path = await _savePath('orders.xlsx');
 
     final excel = Excel.createExcel();
     excel.rename('Sheet1', 'Заказы');
@@ -129,9 +124,10 @@ class ExcelExportService {
     if (bytes != null) {
       await File(path).writeAsBytes(bytes);
     }
+    return path;
   }
 
-  Future<void> exportReport({
+  Future<String> exportReport({
     required DateTime startDate,
     required DateTime endDate,
     required dynamic revenue,
@@ -141,12 +137,10 @@ class ExcelExportService {
     required List<Map<String, dynamic>> hourlyLoad,
     required List<Map<String, dynamic>> topDishes,
   }) async {
-    final path = await _pickSavePath('report_${startDate.day}_${startDate.month}_${startDate.year}.xlsx');
-    if (path == null) return;
+    final path = await _savePath('report_${startDate.day}_${startDate.month}_${startDate.year}.xlsx');
 
     final excel = Excel.createExcel();
 
-    // --- Sheet 1: Сводка ---
     final summary = excel['Сводка'];
     summary.appendRow([TextCellValue('Отчёт за период')]);
     summary.appendRow([
@@ -161,7 +155,6 @@ class ExcelExportService {
     summary.appendRow([TextCellValue('Минимальный чек'), TextCellValue('${_toDouble(minimumCheck).toStringAsFixed(2)} ₽')]);
     _autoWidth(summary, 2);
 
-    // --- Sheet 2: Загруженность по часам ---
     final hourly = excel['По часам'];
     hourly.appendRow([
       TextCellValue('Час'),
@@ -180,7 +173,6 @@ class ExcelExportService {
     }
     _autoWidth(hourly, 3);
 
-    // --- Sheet 3: ТОП блюд ---
     final top = excel['ТОП блюд'];
     top.appendRow([
       TextCellValue('№'),
@@ -201,13 +193,13 @@ class ExcelExportService {
     }
     _autoWidth(top, 4);
 
-    // Удаляем дефолтный лист
     excel.delete('Sheet1');
 
     final bytes = excel.save();
     if (bytes != null) {
       await File(path).writeAsBytes(bytes);
     }
+    return path;
   }
 
   void _autoWidth(Sheet sheet, int colCount) {

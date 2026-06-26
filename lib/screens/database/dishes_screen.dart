@@ -262,10 +262,10 @@ class _DishesScreenState extends State<DishesScreen> {
 
   Future<void> _exportToExcel() async {
     try {
-      await excelService.exportDishes(dishes, getCategoryName);
+      final path = await excelService.exportDishes(dishes, getCategoryName);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Файл сохранён')),
+        SnackBar(content: Text('Сохранено: $path')),
       );
     } catch (e) {
       if (!mounted) return;

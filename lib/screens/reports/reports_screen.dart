@@ -134,7 +134,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> _exportToExcel() async {
     try {
-      await excelService.exportReport(
+      final path = await excelService.exportReport(
         startDate: startDate,
         endDate: endDate,
         revenue: revenue,
@@ -146,7 +146,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Отчёт сохранён в Excel')),
+        SnackBar(content: Text('Сохранено: $path')),
       );
     } catch (e) {
       if (!mounted) return;

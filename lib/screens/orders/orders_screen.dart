@@ -416,12 +416,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
           detailsCache[o.id!] = await repository.getDetails(o.id!);
         }
       }
-      await excelService.exportOrders(orders, (orderId) {
+      final path = await excelService.exportOrders(orders, (orderId) {
         return detailsCache[orderId] ?? [];
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Файл сохранён')),
+        SnackBar(content: Text('Сохранено: $path')),
       );
     } catch (e) {
       if (!mounted) return;
