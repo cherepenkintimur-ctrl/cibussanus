@@ -10,6 +10,8 @@ class DishRepository {
       'name': dish.name.trim(),
       'price': dish.price,
       'description': dish.description?.trim(),
+      'volume': dish.volume,
+      'unit': dish.unit,
       'is_active': dish.isActive ? 1 : 0,
     });
     return id;
@@ -18,7 +20,7 @@ class DishRepository {
   Future<List<Dish>> getAll({bool onlyActive = false}) async {
     final rows = await DbService.instance.query(
       '''
-      SELECT id, category_id, name, price, description, is_active, created_at
+      SELECT id, category_id, name, price, description, volume, unit, cost_price, is_active, created_at
       FROM dishes
       ${onlyActive ? 'WHERE is_active = 1' : ''}
       ORDER BY name
@@ -30,7 +32,7 @@ class DishRepository {
   Future<List<Dish>> getByCategory(int categoryId) async {
     final rows = await DbService.instance.query(
       '''
-      SELECT id, category_id, name, price, description, is_active, created_at
+      SELECT id, category_id, name, price, description, volume, unit, cost_price, is_active, created_at
       FROM dishes
       WHERE category_id = ?
       ORDER BY name
@@ -43,7 +45,7 @@ class DishRepository {
   Future<Dish?> getById(int id) async {
     final row = await DbService.instance.queryOne(
       '''
-      SELECT id, category_id, name, price, description, is_active, created_at
+      SELECT id, category_id, name, price, description, volume, unit, cost_price, is_active, created_at
       FROM dishes WHERE id = ?
       ''',
       arguments: [id],
@@ -62,6 +64,8 @@ class DishRepository {
         'name': dish.name.trim(),
         'price': dish.price,
         'description': dish.description?.trim(),
+        'volume': dish.volume,
+        'unit': dish.unit,
         'is_active': dish.isActive ? 1 : 0,
       },
       where: 'id = ?',
@@ -89,7 +93,7 @@ class DishRepository {
   Future<List<Dish>> search(String keyword) async {
     final rows = await DbService.instance.query(
       '''
-      SELECT id, category_id, name, price, description, is_active, created_at
+      SELECT id, category_id, name, price, description, volume, unit, cost_price, is_active, created_at
       FROM dishes
       WHERE name LIKE ? OR COALESCE(description, '') LIKE ?
       ORDER BY name

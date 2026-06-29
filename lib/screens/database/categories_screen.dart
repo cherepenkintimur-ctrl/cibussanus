@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
+import '../../repositories/dish_repository.dart';
 import '../../services/excel_export_service.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -96,6 +97,56 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  void _showCategoryDetails(Category category) async {
+    final dishRepo = const DishRepository();
+    final dishes = category.id != null ? await dishRepo.getByCategory(category.id!) : <dynamic>[];
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(category.name),
+        content: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (category.description != null && category.description!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(category.description!, style: Theme.of(ctx).textTheme.bodyMedium),
+                ),
+              Text('Блюд: ${dishes.length}', style: Theme.of(ctx).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              if (dishes.isEmpty)
+                const Text('Нет блюд в этой категории')
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: dishes.length,
+                    itemBuilder: (_, i) {
+                      final d = dishes[i];
+                      final volumeStr = d.volume != null && d.volume!.isNotEmpty ? ' · ${d.volume}' : '';
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(d.name, style: const TextStyle(fontSize: 13)),
+                        subtitle: Text('${d.price.toStringAsFixed(0)} ₽$volumeStr', style: const TextStyle(fontSize: 11)),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть')),
+        ],
+      ),
+    );
   }
 
   Future<void> _showCategoryDialog({Category? category}) async {
@@ -315,6 +366,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           ),
                         ],
                       ),
+                      onTap: () => _showCategoryDetails(category),
                     ),
                   );
                 },

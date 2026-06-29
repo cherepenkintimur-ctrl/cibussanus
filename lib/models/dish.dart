@@ -6,6 +6,8 @@ class Dish {
   final String name;
   final double price;
   final String? description;
+  final String? volume;
+  final String? unit;
   final bool isActive;
   final DateTime? createdAt;
 
@@ -15,6 +17,8 @@ class Dish {
     required this.name,
     required this.price,
     this.description,
+    this.volume,
+    this.unit = 'шт',
     this.isActive = true,
     this.createdAt,
   });
@@ -26,6 +30,8 @@ class Dish {
       name: (map['name'] ?? '').toString(),
       price: parseDouble(map['price']),
       description: map['description']?.toString(),
+      volume: map['volume']?.toString(),
+      unit: map['unit']?.toString() ?? 'шт',
       isActive: parseBool(map['is_active'], defaultValue: true),
       createdAt: parseDateTime(map['created_at']),
     );
@@ -38,6 +44,8 @@ class Dish {
       'name': name,
       'price': price,
       'description': description,
+      'volume': volume,
+      'unit': unit,
       'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
     };
@@ -49,6 +57,8 @@ class Dish {
     String? name,
     double? price,
     String? description,
+    String? volume,
+    String? unit,
     bool? isActive,
     DateTime? createdAt,
   }) {
@@ -58,6 +68,8 @@ class Dish {
       name: name ?? this.name,
       price: price ?? this.price,
       description: description ?? this.description,
+      volume: volume ?? this.volume,
+      unit: unit ?? this.unit,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );

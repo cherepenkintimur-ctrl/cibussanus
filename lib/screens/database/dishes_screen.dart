@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../database/db_service.dart';
 import '../../models/category.dart';
+import '../../models/converters.dart';
 import '../../models/dish.dart';
 import '../../repositories/category_repository.dart';
 import '../../repositories/dish_repository.dart';
@@ -112,6 +114,156 @@ class _DishesScreenState extends State<DishesScreen> {
     return match.isEmpty ? 'Без категории' : match.first.name;
   }
 
+  Future<void> _showDishDetails(Dish dish) async {
+    if (dish.id == null) return;
+
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30)).toIso8601String();
+
+    final recentOrders = await DbService.instance.query(
+      'SELECT oi.*, o.order_number, o.order_date, o.total_amount, o.status, w.name as waiter_name '
+      'FROM order_items oi '
+      'JOIN orders o ON o.id = oi.order_id '
+      'LEFT JOIN waiters w ON w.id = o.waiter_id '
+      'WHERE oi.dish_id = ? '
+      'ORDER BY o.order_date DESC '
+      'LIMIT 5',
+      arguments: [dish.id],
+    );
+
+    final stats = await DbService.instance.queryOne(
+      'SELECT COALESCE(SUM(oi.quantity), 0) as total_qty, COALESCE(SUM(oi.line_total), 0) as total_revenue '
+      'FROM order_items oi '
+      'JOIN orders o ON o.id = oi.order_id '
+      'WHERE oi.dish_id = ? AND o.order_date >= ?',
+      arguments: [dish.id, thirtyDaysAgo],
+    );
+
+    final totalQty = parseInt(stats?['total_qty']) ?? 0;
+    final totalRevenue = parseDouble(stats?['total_revenue']);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(dish.name),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoRow('Категория', getCategoryName(dish.categoryId)),
+                _infoRow('Цена', '${dish.price.toStringAsFixed(2)} ₽'),
+                if (dish.volume != null && dish.volume!.isNotEmpty)
+                  _infoRow('Объём', '${dish.volume} ${dish.unit ?? 'шт'}'),
+                if (dish.description != null && dish.description!.isNotEmpty)
+                  _infoRow('Описание', dish.description!),
+                _infoRow('Статус', dish.isActive ? 'Активно' : 'Неактивно'),
+                const Divider(height: 20),
+                Text(
+                  'Статистика за 30 дней',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                ),
+                const SizedBox(height: 6),
+                _infoRow('Продано порций', '$totalQty'),
+                _infoRow('Выручка', '${totalRevenue.toStringAsFixed(2)} ₽'),
+                if (recentOrders.isNotEmpty) ...[
+                  const Divider(height: 20),
+                  Text(
+                    'Последние заказы',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                  ),
+                  const SizedBox(height: 6),
+                  ...recentOrders.map((o) {
+                    final orderDate = parseDateTime(o['order_date']);
+                    final dateStr = orderDate != null
+                        ? '${orderDate.day.toString().padLeft(2, '0')}.${orderDate.month.toString().padLeft(2, '0')}.${orderDate.year}'
+                        : '';
+                    final waiter = o['waiter_name']?.toString() ?? '';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${o['order_number']}  $dateStr',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  'x${o['quantity']}  ${parseDouble(o['line_total']).toStringAsFixed(0)} ₽'
+                                  '${waiter.isNotEmpty ? '  ($waiter)' : ''}',
+                                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _orderStatusColor(o['status']?.toString() ?? '').withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              o['status']?.toString() ?? '',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: _orderStatusColor(o['status']?.toString() ?? ''),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть')),
+        ],
+      ),
+    );
+  }
+
+  Color _orderStatusColor(String status) {
+    switch (status) {
+      case 'Новый':
+        return Colors.blue;
+      case 'Готовится':
+        return Colors.orange;
+      case 'Подан':
+        return Colors.green;
+      case 'Готово':
+        return Colors.teal;
+      case 'Оплачен':
+        return Colors.indigo;
+      case 'Отменён':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _infoRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Flexible(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), textAlign: TextAlign.end)),
+      ],
+    ),
+  );
+
   Future<void> _showDishDialog({Dish? dish}) async {
     final nameController = TextEditingController(text: dish?.name ?? '');
     final priceController =
@@ -134,7 +286,7 @@ class _DishesScreenState extends State<DishesScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<int>(
-                      initialValue: selectedCategoryId,
+                      value: selectedCategoryId,
                       decoration: const InputDecoration(
                         labelText: 'Категория',
                       ),
@@ -380,6 +532,7 @@ class _DishesScreenState extends State<DishesScreen> {
                         ].join('\n'),
                       ),
                       isThreeLine: true,
+                      onTap: () => _showDishDetails(dish),
                       trailing: Wrap(
                         spacing: 4,
                         children: [

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CibusSanus — Учёт продаж ресторана</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #d4b96a;
+    --dark: #1a1a1a;
+    --dark-brown: #2c1810;
+    --cream: #faf6f0;
+    --warm-white: #fff9f0;
+    --text: #3d2b1f;
+    --text-light: #7a6655;
+    --accent-green: #4a6741;
+    --border-gold: rgba(201,168,76,0.3);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    color: var(--text);
+    background: var(--cream);
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background:
+      linear-gradient(135deg, rgba(26,26,26,0.92) 0%, rgba(44,24,16,0.88) 50%, rgba(26,26,26,0.92) 100%),
+      url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&q=80') center/cover no-repeat;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(201,168,76,0.05) 0%, transparent 50%);
+  }
+
+  .hero-content { position: relative; z-index: 2; padding: 2rem; max-width: 900px; }
+
+  .hero-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    margin-bottom: 0.3em;
+    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, #fff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--gold-light);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    line-height: 1.8;
+  }
+
+  .hero-buttons { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), #b8933f);
+    color: var(--dark);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+  }
+  .btn-gold:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(201,168,76,0.6);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .btn-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-3px);
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    animation: bounce 2s infinite;
+  }
+  .scroll-indicator span {
+    display: block;
+    width: 2px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    margin: 0 auto 8px;
+  }
+  .scroll-indicator::after {
+    content: '▾';
+    color: var(--gold);
+    font-size: 1.2rem;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(10px); }
+  }
+
+  /* ===== SECTIONS ===== */
+  section { padding: 6rem 2rem; }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-header .label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1rem;
+  }
+
+  .section-header p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .divider {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.5rem auto;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* ===== ABOUT PROJECT ===== */
+  .about-section { background: var(--warm-white); }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .feature-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    border: 1px solid rgba(201,168,76,0.12);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+  }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .feature-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--dark);
+  }
+
+  .feature-card p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  /* ===== DESCRIPTION ===== */
+  .desc-section {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-brown) 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .desc-section::before {
+    content: '"';
+    position: absolute;
+    top: -40px;
+    left: 5%;
+    font-family: 'Playfair Display', serif;
+    font-size: 20rem;
+    color: rgba(201,168,76,0.06);
+    line-height: 1;
+  }
+
+  .desc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .desc-text h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .desc-text p {
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 1.2rem;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .tech-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+
+  .tech-list li {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold-light);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+
+  .desc-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: rgba(201,168,76,0.3);
+  }
+
+  .stat-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ===== AUTHOR ===== */
+  .author-section { background: var(--cream); }
+
+  .author-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 3rem;
+    border: 1px solid var(--border-gold);
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+  }
+
+  .author-avatar {
+    flex-shrink: 0;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--dark-brown));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    color: #fff;
+    box-shadow: 0 8px 30px rgba(201,168,76,0.3);
+  }
+
+  .author-info h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+
+  .author-info .author-role {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .author-info p {
+    color: var(--text-light);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+
+  .author-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+  }
+  .author-contact:hover { color: var(--dark-brown); }
+
+  /* ===== DOWNLOAD ===== */
+  .download-section {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-brown) 100%);
+    color: #fff;
+    text-align: center;
+  }
+
+  .download-section .section-header h2 { color: #fff; }
+  .download-section .section-header p { color: rgba(255,255,255,0.6); }
+
+  .download-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .download-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.4s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .download-card:hover {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  }
+
+  .download-icon { font-size: 3rem; margin-bottom: 1.2rem; }
+
+  .download-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .download-card p {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--gold), #b8933f);
+    color: var(--dark);
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.3s;
+  }
+
+  .download-card:hover .download-btn {
+    box-shadow: 0 4px 20px rgba(201,168,76,0.5);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    padding: 3rem 2rem;
+    font-size: 0.9rem;
+  }
+
+  footer .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+
+  footer a { color: var(--gold-light); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .desc-grid { grid-template-columns: 1fr; }
+    .author-card { flex-direction: column; text-align: center; }
+    .hero-buttons { flex-direction: column; align-items: center; }
+    section { padding: 4rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-icon">🍽️</div>
+    <h1>CibusSanus</h1>
+    <p class="hero-subtitle">Учёт продаж ресторана</p>
+    <p class="hero-desc">
+      Современное приложение для учёта продаж ресторана европейской кухни.
+      Автономная работа, удобный интерфейс и мощная аналитика.
+    </p>
+    <div class="hero-buttons">
+      <a href="#download" class="btn btn-gold">
+        ⬇ Скачать приложение
+      </a>
+      <a href="#about" class="btn btn-outline">
+        Узнать больше
+      </a>
+    </div>
+  </div>
+  <div class="scroll-indicator"><span></span></div>
+</section>
+
+<!-- ABOUT PROJECT -->
+<section id="about" class="about-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">О проекте</span>
+      <h2>Всё под контролем</h2>
+      <div class="divider"></div>
+      <p>CibusSanus — это удобный инструмент для владельцев и сотрудников ресторана</p>
+    </div>
+    <div class="about-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Управление меню</h3>
+        <p>Добавляйте, редактируйте и удаляйте категории и блюда. Поиск и фильтрация для быстрого доступа.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧾</div>
+        <h3>Заказы</h3>
+        <p>Создавайте и редактируйте заказы с автоматическим расчётом стоимости.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Отчёты</h3>
+        <p>Выручка, чеки, загруженность, ТОП блюд — вся аналитика в одном месте.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <h3>Экспорт в Excel</h3>
+        <p>Выгружайте данные в формат .xlsx для дальнейшей обработки.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Сортировка и поиск</h3>
+        <p>Многопараметровая сортировка списков и быстрый поиск по базе данных.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Автономность</h3>
+        <p>Встроенная SQLite база данных. Работает без интернета — данные хранятся локально.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESCRIPTION -->
+<section class="desc-section">
+  <div class="container">
+    <div class="desc-grid">
+      <div class="desc-text">
+        <span class="label" style="color:var(--gold)">Технологии</span>
+        <h2>Современный стек технологий</h2>
+        <p>
+          Приложение разработано на Flutter — кроссплатфреймворке, обеспечивающем
+          нативную производительность на Android и Windows.
+        </p>
+        <p>
+          База данных SQLite встроена в приложение и создаётся автоматически при первом запуске.
+          Семь категорий, 75 блюд и подробная аналитика — всё из коробки.
+        </p>
+        <ul class="tech-list">
+          <li>Flutter</li>
+          <li>Dart</li>
+          <li>SQLite</li>
+          <li>Material Design 3</li>
+          <li>Excel Export</li>
+        </ul>
+      </div>
+      <div class="desc-visual">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number">7</span>
+            <span class="stat-label">Категорий</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">75</span>
+            <span class="stat-label">Блюд</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">2</span>
+            <span class="stat-label">Платформы</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">∞</span>
+            <span class="stat-label">Заказов</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTHOR -->
+<section id="author" class="author-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">Автор</span>
+      <h2>Создатель проекта</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="author-card">
+      <div class="author-avatar">👨‍💻</div>
+      <div class="author-info">
+        <h3>Черепенькин Тимур</h3>
+        <p class="author-role">Разработчик</p>
+        <p>
+          <!-- ВСТАВЬТЕ СВОЮ ИНФОРМАЦИЮ ОБ АВТОРЕ СЮДА -->
+          Разработчик приложения CibusSanus. Студент, увлечённый программированием
+          и созданием удобных инструментов для бизнеса.
+        </p>
+        <a href="mailto:cherepenkintimur@gmail.com" class="author-contact">
+          ✉ cherepenkintimur@gmail.com
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download" class="download-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="label">Скачать</span>
+      <h2>Начните использовать сегодня</h2>
+      <div class="divider"></div>
+      <p>Доступно для Android и Windows</p>
+    </div>
+    <div class="download-cards">
+      <a href="https://github.com/cherepenkintimur-ctrl/cibussanus/releases" class="download-card" target="_blank">
+        <div class="download-icon">🤖</div>
+        <h3>Android</h3>
+        <p>Устанавливается из APK-файла. Работает на Android 6.0+</p>
+        <div class="download-btn">Скачать APK ⬇</div>
+      </a>
+      <a href="https://github.com/cherepenkintimur-ctrl/cibussanus/releases" class="download-card" target="_blank">
+        <div class="download-icon">🖥️</div>
+        <h3>Windows</h3>
+        <p>Нативное приложение для Windows 10/11</p>
+        <div class="download-btn">Скачать EXE ⬇</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">CibusSanus</div>
+  <p>© 2026 Черепенькин Тимур Антонович · <a href="mailto:cherepenkintimur@gmail.com">cherepenkintimur@gmail.com</a></p>
+</footer>
+
+</body>
+</html>
