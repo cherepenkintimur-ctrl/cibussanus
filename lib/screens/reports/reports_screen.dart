@@ -108,12 +108,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
   DateTime get _queryStart =>
       DateTime(startDate.year, startDate.month, startDate.day);
 
-  DateTime get _queryEnd {
-    if (_selectedPeriod == 1 || _selectedPeriod == 4) {
-      return DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1));
-    }
-    return DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1));
-  }
+  DateTime get _queryEnd =>
+      DateTime(endDate.year, endDate.month, endDate.day).add(const Duration(days: 1));
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';

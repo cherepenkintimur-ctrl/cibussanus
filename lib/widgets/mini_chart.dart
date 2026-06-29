@@ -9,6 +9,7 @@ class MiniSparkline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) return const SizedBox.shrink();
+    final primary = Theme.of(context).colorScheme.primary;
 
     final spots = <FlSpot>[];
     for (var i = 0; i < points.length; i++) {
@@ -26,7 +27,7 @@ class MiniSparkline extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.3,
-            color: Colors.green,
+            color: primary,
             barWidth: 1.5,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
@@ -36,8 +37,8 @@ class MiniSparkline extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.green.withValues(alpha: 0.2),
-                  Colors.green.withValues(alpha: 0.0),
+                  primary.withValues(alpha: 0.2),
+                  primary.withValues(alpha: 0.0),
                 ],
               ),
             ),

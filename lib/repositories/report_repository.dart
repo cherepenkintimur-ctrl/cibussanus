@@ -473,7 +473,7 @@ class ReportRepository {
              COUNT(*) as order_count,
              COALESCE(AVG(total_amount), 0) as avg_check
       FROM orders WHERE order_date >= ? AND order_date < ?
-    ''', arguments: [startDate.toIso8601String(), endDate.add(const Duration(days: 1)).toIso8601String()]);
+    ''', arguments: [startDate.toIso8601String(), endDate.toIso8601String()]);
 
     // Cost of goods sold (from order_items * dish cost_price)
     final cogsRow = await DbService.instance.queryOne('''
@@ -482,19 +482,19 @@ class ReportRepository {
       JOIN dishes d ON d.id = oi.dish_id
       JOIN orders o ON o.id = oi.order_id
       WHERE o.order_date >= ? AND o.order_date < ?
-    ''', arguments: [startDate.toIso8601String(), endDate.add(const Duration(days: 1)).toIso8601String()]);
+    ''', arguments: [startDate.toIso8601String(), endDate.toIso8601String()]);
 
     // Labor costs (salaries from expenses table)
     final laborRow = await DbService.instance.queryOne('''
       SELECT COALESCE(SUM(amount), 0) as labor
       FROM expenses WHERE category = 'Зарплата' AND expense_date >= ? AND expense_date < ?
-    ''', arguments: [startDate.toIso8601String(), endDate.add(const Duration(days: 1)).toIso8601String()]);
+    ''', arguments: [startDate.toIso8601String(), endDate.toIso8601String()]);
 
     // Operating expenses (all expenses except salary)
     final opexRow = await DbService.instance.queryOne('''
       SELECT COALESCE(SUM(amount), 0) as opex
       FROM expenses WHERE category != 'Зарплата' AND expense_date >= ? AND expense_date < ?
-    ''', arguments: [startDate.toIso8601String(), endDate.add(const Duration(days: 1)).toIso8601String()]);
+    ''', arguments: [startDate.toIso8601String(), endDate.toIso8601String()]);
 
     final revenue = (revRow?['revenue'] as num?)?.toDouble() ?? 0;
     final cogs = (cogsRow?['cogs'] as num?)?.toDouble() ?? 0;

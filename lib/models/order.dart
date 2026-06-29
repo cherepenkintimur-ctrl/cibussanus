@@ -50,7 +50,7 @@ class OrderModel {
     return {
       if (id != null) 'id': id,
       'order_number': orderNumber,
-      if (orderDate != null) 'order_date': orderDate,
+      if (orderDate != null) 'order_date': orderDate?.toIso8601String(),
       'total_amount': totalAmount,
       'payment_method': paymentMethod,
       'notes': notes,

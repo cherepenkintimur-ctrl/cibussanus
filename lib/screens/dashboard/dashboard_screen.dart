@@ -42,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
 
       final now = DateTime.now();
-      final yesterdayStart = DateTime(now.year, now.month, now.day - 1);
+      final yesterdayStart = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
       final yesterdayEnd = DateTime(now.year, now.month, now.day);
       final yesterdayRevenue = await _reportRepo.revenueByPeriod(
         startDate: yesterdayStart,

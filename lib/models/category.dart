@@ -27,7 +27,7 @@ class Category {
       if (id != null) 'id': id,
       'name': name,
       'description': description,
-      if (createdAt != null) 'created_at': createdAt,
+      if (createdAt != null) 'created_at': createdAt?.toIso8601String(),
     };
   }
 

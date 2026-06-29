@@ -51,7 +51,7 @@ class Dish {
       'volume': volume,
       'unit': unit,
       'is_active': isActive,
-      if (createdAt != null) 'created_at': createdAt,
+      if (createdAt != null) 'created_at': createdAt?.toIso8601String(),
     };
   }
 

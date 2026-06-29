@@ -78,7 +78,9 @@ class BackupService {
           buffer.writeln('INSERT INTO $table ($columns) VALUES ($values);');
         }
         buffer.writeln();
-      } catch (_) {}
+      } catch (e) {
+        print('Backup table $table error: $e');
+      }
     }
 
     final dbPath = await _getDatabasesPath();
