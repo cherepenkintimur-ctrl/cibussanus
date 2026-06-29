@@ -156,6 +156,8 @@ class _DishesScreenState extends State<DishesScreen> {
               children: [
                 _infoRow('Категория', getCategoryName(dish.categoryId)),
                 _infoRow('Цена', '${dish.price.toStringAsFixed(2)} ₽'),
+                _infoRow('Себестоимость', '${dish.costPrice.toStringAsFixed(2)} ₽'),
+                _infoRow('Маржа', '${(dish.price - dish.costPrice).toStringAsFixed(2)} ₽ (${dish.price > 0 ? ((dish.price - dish.costPrice) / dish.price * 100).toStringAsFixed(0) : '0'}%)'),
                 if (dish.volume != null && dish.volume!.isNotEmpty)
                   _infoRow('Объём', '${dish.volume} ${dish.unit ?? 'шт'}'),
                 if (dish.description != null && dish.description!.isNotEmpty)
@@ -268,6 +270,8 @@ class _DishesScreenState extends State<DishesScreen> {
     final nameController = TextEditingController(text: dish?.name ?? '');
     final priceController =
         TextEditingController(text: dish?.price.toString() ?? '');
+    final costPriceController =
+        TextEditingController(text: dish?.costPrice.toString() ?? '');
     final descriptionController =
         TextEditingController(text: dish?.description ?? '');
     int? selectedCategoryId = dish?.categoryId;
@@ -317,6 +321,12 @@ class _DishesScreenState extends State<DishesScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      controller: costPriceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Себестоимость'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: descriptionController,
                       maxLines: 3,
                       decoration: const InputDecoration(labelText: 'Описание'),
@@ -358,6 +368,7 @@ class _DishesScreenState extends State<DishesScreen> {
       categoryId: selectedCategoryId,
       name: nameController.text.trim(),
       price: double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0,
+      costPrice: double.tryParse(costPriceController.text.replaceAll(',', '.')) ?? 0,
       description: descriptionController.text.trim().isEmpty
           ? null
           : descriptionController.text.trim(),
@@ -525,7 +536,7 @@ class _DishesScreenState extends State<DishesScreen> {
                       subtitle: Text(
                         [
                           'Категория: ${getCategoryName(dish.categoryId)}',
-                          'Цена: ${dish.price.toStringAsFixed(2)} ₽',
+                          'Цена: ${dish.price.toStringAsFixed(2)} ₽ · Себест: ${dish.costPrice.toStringAsFixed(2)} ₽ · Маржа: ${(dish.price - dish.costPrice).toStringAsFixed(2)} ₽',
                           if (dish.description != null && dish.description!.trim().isNotEmpty)
                             dish.description!,
                           if (!dish.isActive) 'Неактивно',

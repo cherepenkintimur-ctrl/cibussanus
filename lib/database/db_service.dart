@@ -65,9 +65,24 @@ class DbService {
       // Re-seed cash registers with correct column names
       await db.delete('cash_registers');
       await _seedCashRegisters(db);
-      // Add seed data for reservations and shifts
-      await _seedReservations(db);
-      await _seedShifts(db);
+      // Seed waiters/expenses if empty (missed by earlier upgrades)
+      final waiterCount = (await db.rawQuery('SELECT COUNT(*) as cnt FROM waiters')).first['cnt'] as int? ?? 0;
+      if (waiterCount == 0) {
+        await _seedWaiters(db);
+      }
+      final expenseCount = (await db.rawQuery('SELECT COUNT(*) as cnt FROM expenses')).first['cnt'] as int? ?? 0;
+      if (expenseCount == 0) {
+        await _seedExpenses(db);
+      }
+      // Seed reservations/shifts only if empty
+      final resCount = (await db.rawQuery('SELECT COUNT(*) as cnt FROM reservations')).first['cnt'] as int? ?? 0;
+      if (resCount == 0) {
+        await _seedReservations(db);
+      }
+      final shiftCount = (await db.rawQuery('SELECT COUNT(*) as cnt FROM shifts')).first['cnt'] as int? ?? 0;
+      if (shiftCount == 0) {
+        await _seedShifts(db);
+      }
     }
     await _createIndexes(db);
   }
@@ -598,12 +613,10 @@ class DbService {
 
   Future<void> _seedOrdersWithWaiters(Database db) async {
     final paymentMethods = ['Наличные', 'Карта', 'Безнал', 'Наличные', 'Карта', 'Карта', 'Наличные', 'Карта'];
-
-    // Realistic status distribution: kitchen has orders, most are paid
     final statuses = ['Оплачен', 'Оплачен', 'Оплачен', 'Оплачен', 'Подан', 'Готово', 'Новый', 'Готовится'];
 
-    // Uneven waiter distribution: senior gets more, new hires get fewer
-    final waiterWeights = [16, 13, 12, 11, 10, 9, 9, 8, 7, 5]; // total = 100, repeated 10x = 1000
+    // Uneven waiter distribution
+    final waiterWeights = [16, 13, 12, 11, 10, 9, 9, 8, 7, 5];
     final waiterPool = <int>[];
     for (int i = 0; i < 1000; i++) {
       int r = i % 100;
@@ -615,14 +628,29 @@ class DbService {
       waiterPool.add(waiter + 1);
     }
 
-    final random = DateTime(2026, 1, 1);
+    final now = DateTime(2026, 6, 29);
+    // 600 orders in last 30 days (20/day), 400 before that
+    final recentCutoff = 400;
 
     for (int i = 1; i <= 1000; i++) {
-      final dayOffset = (i * 180 ~/ 1000);
-      final date = random.add(Duration(days: dayOffset));
-      final hour = 11 + (i % 12);
-      final minute = (i * 7) % 60;
-      final orderDate = DateTime(date.year, date.month, date.day, hour, minute);
+      DateTime orderDate;
+      if (i > recentCutoff) {
+        // Concentrated in last 30 days: 20 orders per day
+        final dayInWindow = (i - recentCutoff - 1) ~/ 20;
+        final orderInDay = (i - recentCutoff - 1) % 20;
+        final day = now.subtract(Duration(days: 29 - dayInWindow));
+        final hour = 10 + (orderInDay % 12);
+        final minute = (orderInDay * 3) % 60;
+        orderDate = DateTime(day.year, day.month, day.day, hour, minute);
+      } else {
+        // Spread over prior months
+        final dayOffset = (i * 140 ~/ recentCutoff);
+        final baseDate = now.subtract(const Duration(days: 170));
+        final date = baseDate.add(Duration(days: dayOffset));
+        final hour = 11 + (i % 12);
+        final minute = (i * 7) % 60;
+        orderDate = DateTime(date.year, date.month, date.day, hour, minute);
+      }
 
       final orderNumber = 'ORD-${i.toString().padLeft(5, '0')}';
       final waiterId = waiterPool[i - 1];
@@ -630,10 +658,10 @@ class DbService {
       final paymentMethod = paymentMethods[i % paymentMethods.length];
       final status = statuses[i % statuses.length];
 
-      // Link 300 orders (30%) to customers 1-33
+      // Link 300 orders (30%) to customers
       final customerId = (i % 10 == 0 || i % 7 == 0 || i % 13 == 0) ? 1 + (i % 33) : null;
 
-      final itemCount = 1 + (i % 4);
+      final itemCount = 2 + (i % 4);
       double totalAmount = 0;
 
       await db.rawInsert(
@@ -646,8 +674,8 @@ class DbService {
 
       for (int j = 0; j < itemCount; j++) {
         final dishId = 1 + ((i + j * 13) % 41);
-        final qty = 1 + ((i + j) % 3);
-        final priceResult = await db.rawQuery('SELECT price FROM dishes WHERE id = ?', [dishId]);
+        final qty = 1 + ((i + j) % 2);
+        final priceResult = await db.rawQuery('SELECT price, cost_price FROM dishes WHERE id = ?', [dishId]);
         final price = (priceResult.isNotEmpty ? (priceResult.first['price'] as double) : 500.0);
         final lineTotal = price * qty;
         totalAmount += lineTotal;
@@ -716,6 +744,18 @@ class DbService {
       ['Продукты', 'Мясо (июнь)', 52000.00, '2026-06-08', 'РК-051', 'МясоПром'],
       ['Продукты', 'Вина и напитки (июнь)', 70000.00, '2026-06-12', 'РК-052', 'ВиноТорг'],
       ['Коммунальные', 'Аренда (июнь)', 180000.00, '2026-06-05', null, null],
+
+      // Extra recent expenses for current period
+      ['Продукты', 'Закупка овощей (середина июня)', 15000.00, '2026-06-15', 'РК-060', 'ОвощеПром'],
+      ['Продукты', 'Мясо (середина июня)', 54000.00, '2026-06-16', 'РК-061', 'МясоПром'],
+      ['Продукты', 'Рыба и морепродукты (середина июня)', 36000.00, '2026-06-17', 'РК-062', 'РыбаТорг'],
+      ['Маркетинг', 'Instagram реклама (июнь)', 30000.00, '2026-06-18', null, null],
+      ['Продукты', 'Закупка овощей (конец июня)', 15500.00, '2026-06-22', 'РК-070', 'ОвощеПром'],
+      ['Продукты', 'Мясо (конец июня)', 55000.00, '2026-06-23', 'РК-071', 'МясоПром'],
+      ['Продукты', 'Напитки и соки (конец июня)', 42000.00, '2026-06-24', 'РК-072', 'ВиноТорг'],
+      ['Зарплата', 'Аванс официантам (июнь)', 190000.00, '2026-06-15', null, null],
+      ['Зарплата', 'Аванс поварам (июнь)', 140000.00, '2026-06-15', null, null],
+      ['Оборудование', 'Замена фильтров для кофемашины', 12000.00, '2026-06-20', 'РМ-002', 'КофеСервис'],
     ];
 
     for (final e in expenses) {
